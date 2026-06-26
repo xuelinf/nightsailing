@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { products, siteMeta } from "./products.js";
 
-test("site metadata starts at version 0.0.2", () => {
-  assert.equal(siteMeta.version, "0.0.2");
+test("site metadata is aligned with the current showcase release", () => {
+  assert.equal(siteMeta.version, "0.0.3");
   assert.equal(siteMeta.name, "夜航船之书");
   assert.match(siteMeta.headline, /AI 工具/);
+  assert.match(siteMeta.edition, /Laper/);
 });
 
 test("catalog exposes two available products and two planned products", () => {
@@ -40,6 +41,9 @@ test("every product has enough material for a showcase detail page", () => {
     assert.ok(product.detail.length >= product.summary.length);
     assert.ok(product.visual);
     assert.equal(product.scenes.length, 3);
+    assert.equal(product.evidence.length, 3);
     assert.equal(product.mediaSlots.length, 3);
+    assert.ok(product.prompt.length >= 12);
+    assert.ok(product.nextStep.length >= 12);
   }
 });

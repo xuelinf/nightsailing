@@ -38,6 +38,24 @@ const routeStops = [
   "继续记录下一次改版",
 ];
 
+const heroSheets = [
+  {
+    label: "LOCAL LOG",
+    title: "AI航行日记",
+    lines: ["今日用量", "额度窗口", "十四日热力"],
+  },
+  {
+    label: "TRAY TOOL",
+    title: "问玄",
+    lines: ["起卦问题", "六爻排盘", "模型参断"],
+  },
+  {
+    label: "NEXT CABIN",
+    title: "端口占用管理器",
+    lines: ["端口", "进程", "释放"],
+  },
+];
+
 function getInitialSlug() {
   const match = window.location.hash.match(/^#\/product\/(.+)$/);
   return match ? decodeURIComponent(match[1]) : "";
@@ -159,6 +177,12 @@ function Home({ onOpenProduct }) {
 
   return (
     <>
+      <aside className="section-rail" aria-label="页面航线">
+        <a href="#preface"><span />序</a>
+        <a href="#catalog"><span />舱</a>
+        <a href="#route"><span />航</a>
+        <a href="#log"><span />记</a>
+      </aside>
       <section className="hero-section" id="preface">
         <img className="hero-image" src={heroImage} alt="" />
         <div className="hero-shade" />
@@ -166,6 +190,15 @@ function Home({ onOpenProduct }) {
           <span />
           <span />
           <span />
+        </div>
+        <div className="hero-sheets" aria-hidden="true">
+          {heroSheets.map((sheet) => (
+            <div className="hero-sheet" key={sheet.title}>
+              <span>{sheet.label}</span>
+              <strong>{sheet.title}</strong>
+              {sheet.lines.map((line) => <em key={line}>{line}</em>)}
+            </div>
+          ))}
         </div>
 
         <div className="hero-copy" data-reveal>
@@ -181,6 +214,8 @@ function Home({ onOpenProduct }) {
             <a className="ghost-action" href="#route">阅读航线</a>
           </div>
         </div>
+
+        <HeroComposer onOpenProduct={onOpenProduct} />
 
         <div className="hero-ledger" data-reveal>
           <span>TOOLS {String(products.length).padStart(2, "0")}</span>
@@ -238,9 +273,10 @@ function Home({ onOpenProduct }) {
             <p className="micro-label">LOGBOOK</p>
             <h2>最近一次校订</h2>
           </div>
-          <p>把首版从“能看见”推进到“有调性、有交互、能展示”。</p>
+          <p>从 Laper 的产品物件感里取法，继续把夜航船校成克制、可触、能展示的作品站。</p>
         </div>
         <div className="log-list">
+          <article data-reveal><span>0.0.3</span><p>完成 Laper 视觉调研，新增英雄札记输入器、漂浮产品页、证据型卡片与更细的产品页展示层次。</p></article>
           <article data-reveal><span>0.0.2</span><p>重做首页叙事、产品卡片、滚动显现、详情页媒体舞台和产品视觉占位。</p></article>
           <article data-reveal><span>0.0.1</span><p>建立“夜航船之书”站点、四个产品位和两个 macOS 工具下载入口。</p></article>
         </div>
@@ -248,6 +284,28 @@ function Home({ onOpenProduct }) {
 
       <Footer />
     </>
+  );
+}
+
+function HeroComposer({ onOpenProduct }) {
+  const featured = products.slice(0, 4);
+
+  return (
+    <section className="hero-composer" aria-label="夜航札记工具检索" data-reveal>
+      <div className="composer-input">
+        <span>夜航札记</span>
+        <p>我想找一个能帮我「看见工作节奏」的 AI 工具</p>
+        <i aria-hidden="true" />
+      </div>
+      <div className="composer-tools">
+        {featured.map((product) => (
+          <button key={product.slug} onClick={() => onOpenProduct(product.slug)}>
+            <span>{product.index}</span>
+            {product.shortName}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -300,6 +358,9 @@ function ProductCard({ product, onOpen }) {
         </div>
         <h3>{product.name}</h3>
         <p>{product.summary}</p>
+        <div className="card-evidence" aria-label={`${product.name} 状态证据`}>
+          {product.evidence.map((item) => <span key={item}>{item}</span>)}
+        </div>
       </div>
       <div className="card-foot">
         <span>{product.platform}</span>
@@ -325,6 +386,10 @@ function ProductDetail({ product, onHome }) {
             <span>{product.openSourceLabel}</span>
           </div>
           <h1>{product.name}</h1>
+          <div className="detail-prompt">
+            <span>Prompt</span>
+            <p>{product.prompt}</p>
+          </div>
           <p className="detail-manifesto">{product.manifesto}</p>
           <p className="detail-summary">{product.detail}</p>
           <div className="detail-actions">
@@ -338,6 +403,9 @@ function ProductDetail({ product, onHome }) {
           <div className="stage-caption">
             <span>{product.shortName}</span>
             <span>{isAvailable ? "Release Visual" : "Concept Visual"}</span>
+          </div>
+          <div className="stage-panel" aria-hidden="true">
+            {product.evidence.map((item) => <span key={item}>{item}</span>)}
           </div>
         </div>
       </article>
@@ -370,7 +438,7 @@ function ProductDetail({ product, onHome }) {
             <article key={slot} className="media-slot">
               <span>{String(index + 1).padStart(2, "0")}</span>
               <h3>{slot}</h3>
-              <p>{index === 0 ? product.releaseNote : "等待真实素材补入后，这里会成为产品页的核心展示段落。"}</p>
+              <p>{index === 0 ? product.releaseNote : index === 1 ? product.nextStep : "等待真实素材补入后，这里会成为产品页的核心展示段落。"}</p>
             </article>
           ))}
         </div>
