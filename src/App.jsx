@@ -13,49 +13,6 @@ const productImages = {
   "ai-voice-input": aiVoiceInputImage,
 };
 
-const principles = [
-  {
-    label: "Collect",
-    title: "把可用的留下",
-    body: "这里不是灵感墙，而是经过自己长期使用、打磨、发布的工具目录。",
-  },
-  {
-    label: "Open",
-    title: "能开源的就开源",
-    body: "当工具适合共享，会留下源码入口；当还在形成，会先清楚标注状态。",
-  },
-  {
-    label: "Quiet",
-    title: "让技术降低噪声",
-    body: "AI 工具不需要总是耀眼。它更像夜里的一盏灯，照见下一步即可。",
-  },
-];
-
-const routeStops = [
-  "发现一个真实的小问题",
-  "把流程压缩成一个工具",
-  "发布下载与源码入口",
-  "继续记录下一次改版",
-];
-
-const heroSheets = [
-  {
-    label: "LOCAL LOG",
-    title: "AI航行日记",
-    lines: ["今日用量", "额度窗口", "十四日热力"],
-  },
-  {
-    label: "TRAY TOOL",
-    title: "问玄",
-    lines: ["起卦问题", "六爻排盘", "模型参断"],
-  },
-  {
-    label: "NEXT CABIN",
-    title: "端口占用管理器",
-    lines: ["端口", "进程", "释放"],
-  },
-];
-
 function getInitialSlug() {
   const match = window.location.hash.match(/^#\/product\/(.+)$/);
   return match ? decodeURIComponent(match[1]) : "";
@@ -63,7 +20,6 @@ function getInitialSlug() {
 
 function App() {
   const [activeSlug, setActiveSlug] = useState(getInitialSlug);
-  const [scrollRatio, setScrollRatio] = useState(0);
   const activeProduct = useMemo(
     () => products.find((product) => product.slug === activeSlug),
     [activeSlug],
@@ -80,43 +36,6 @@ function App() {
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
-
-  useEffect(() => {
-    const updateScrollRatio = () => {
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollRatio(maxScroll > 0 ? window.scrollY / maxScroll : 0);
-    };
-    updateScrollRatio();
-    window.addEventListener("scroll", updateScrollRatio, { passive: true });
-    window.addEventListener("resize", updateScrollRatio);
-    return () => {
-      window.removeEventListener("scroll", updateScrollRatio);
-      window.removeEventListener("resize", updateScrollRatio);
-    };
-  }, [activeSlug]);
-
-  useEffect(() => {
-    const targets = document.querySelectorAll("[data-reveal]");
-    if (!("IntersectionObserver" in window)) {
-      targets.forEach((target) => target.classList.add("is-visible"));
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.16 },
-    );
-
-    targets.forEach((target) => observer.observe(target));
-    return () => observer.disconnect();
-  }, [activeSlug]);
 
   function openProduct(slug) {
     window.location.hash = `/product/${slug}`;
@@ -137,7 +56,6 @@ function App() {
 
   return (
     <main className="site-shell">
-      <ScrollProgress value={scrollRatio} />
       <Nav onHome={goHome} />
       {activeProduct ? (
         <ProductDetail product={activeProduct} onHome={goHome} />
@@ -148,102 +66,52 @@ function App() {
   );
 }
 
-function ScrollProgress({ value }) {
-  return <div className="scroll-progress" style={{ transform: `scaleX(${value})` }} />;
-}
-
 function Nav({ onHome }) {
   return (
     <header className="site-nav">
-      <nav className="nav-links" aria-label="主导航">
-        <button onClick={() => onHome("preface")}>序章</button>
-        <button onClick={() => onHome("catalog")}>船舱</button>
-        <button onClick={() => onHome("route")}>航线</button>
-      </nav>
       <button className="brand-mark" onClick={() => onHome()} aria-label="回到首页">
-        <span>夜航船</span>
+        {siteMeta.name}
       </button>
-      <div className="nav-actions">
+      <nav className="nav-links" aria-label="主导航">
+        <button onClick={() => onHome("catalog")}>工具</button>
+        <button onClick={() => onHome("maintenance")}>维护</button>
         <a href={siteMeta.githubHref} target="_blank" rel="noreferrer">GitHub</a>
-        <button className="filled-link" onClick={() => onHome("catalog")}>打开目录</button>
-      </div>
+      </nav>
     </header>
   );
 }
 
 function Home({ onOpenProduct }) {
   const availableCount = products.filter((product) => product.status === "available").length;
-  const plannedCount = products.length - availableCount;
+  const openSourceCount = products.filter((product) => product.sourceHref || product.openSourceLabel.includes("开源")).length;
 
   return (
     <>
-      <aside className="section-rail" aria-label="页面航线">
-        <a href="#preface"><span />序</a>
-        <a href="#catalog"><span />舱</a>
-        <a href="#route"><span />航</a>
-        <a href="#log"><span />记</a>
-      </aside>
       <section className="hero-section" id="preface">
         <img className="hero-image" src={heroImage} alt="" />
         <div className="hero-shade" />
-        <div className="hero-ornament" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className="hero-sheets" aria-hidden="true">
-          {heroSheets.map((sheet) => (
-            <div className="hero-sheet" key={sheet.title}>
-              <span>{sheet.label}</span>
-              <strong>{sheet.title}</strong>
-              {sheet.lines.map((line) => <em key={line}>{line}</em>)}
-            </div>
-          ))}
-        </div>
-
-        <div className="hero-copy" data-reveal>
+        <div className="hero-inner">
           <p className="micro-label">{siteMeta.edition}</p>
           <h1>{siteMeta.name}</h1>
           <p className="hero-line">{siteMeta.headline}</p>
-          <p className="hero-text">
-            一艘安静的船，收纳那些被做出来、被验证过、也仍在生长的 AI 工具。
-            每一个舱位都指向一个具体问题：下载、源码、日志和下一次改版。
-          </p>
+          <p className="hero-text">{siteMeta.description}</p>
           <div className="hero-actions">
-            <a className="primary-action" href="#catalog">查看船舱</a>
-            <a className="ghost-action" href="#route">阅读航线</a>
+            <a className="primary-action" href="#catalog">{siteMeta.primaryCta}</a>
+            <a className="ghost-action" href="#maintenance">{siteMeta.secondaryCta}</a>
           </div>
         </div>
-
-        <HeroComposer onOpenProduct={onOpenProduct} />
-
-        <div className="hero-ledger" data-reveal>
-          <span>TOOLS {String(products.length).padStart(2, "0")}</span>
-          <span>OPEN {String(availableCount).padStart(2, "0")}</span>
-          <span>NEXT {String(plannedCount).padStart(2, "0")}</span>
-        </div>
-      </section>
-
-      <section className="principle-section" aria-label="夜航船之书的原则">
-        {principles.map((item) => (
-          <article className="principle-card" key={item.label} data-reveal>
-            <span>{item.label}</span>
-            <h2>{item.title}</h2>
-            <p>{item.body}</p>
-          </article>
-        ))}
+        <dl className="hero-stats" aria-label="工具状态">
+          <div><dt>{products.length}</dt><dd>工具条目</dd></div>
+          <div><dt>{availableCount}</dt><dd>可下载</dd></div>
+          <div><dt>{openSourceCount}</dt><dd>开源/计划开源</dd></div>
+        </dl>
       </section>
 
       <section className="catalog-section" id="catalog">
-        <div className="section-heading" data-reveal>
-          <div>
-            <p className="micro-label">CABIN INDEX</p>
-            <h2>船舱不是货架，是工具的陈列室。</h2>
-          </div>
-          <p>
-            卡片记录当前状态、下载入口与开源边界。能使用的直接上船；
-            还在设计中的，也先留下清楚的位置。
-          </p>
+        <div className="section-heading">
+          <p className="micro-label">TOOLS</p>
+          <h2>先看状态，再打开工具。</h2>
+          <p>每个工具只保留判断所需的信息：用途、状态、平台、下载和源码。更完整的截图和视频，会在产品页逐步补齐。</p>
         </div>
         <div className="product-grid">
           {products.map((product) => (
@@ -252,34 +120,16 @@ function Home({ onOpenProduct }) {
         </div>
       </section>
 
-      <section className="route-section" id="route">
-        <div className="route-copy" data-reveal>
-          <p className="micro-label">BUILD ROUTE</p>
-          <h2>从一个具体的麻烦，航行到一个可被取用的工具。</h2>
+      <section className="maintenance-section" id="maintenance">
+        <div>
+          <p className="micro-label">MAINTENANCE</p>
+          <h2>新产品先补资料，再上船。</h2>
         </div>
-        <ol className="route-list">
-          {routeStops.map((stop, index) => (
-            <li key={stop} data-reveal>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <p>{stop}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="log-section" id="log">
-        <div className="section-heading compact" data-reveal>
-          <div>
-            <p className="micro-label">LOGBOOK</p>
-            <h2>最近一次校订</h2>
-          </div>
-          <p>从 Laper 的产品物件感里取法，继续把夜航船校成克制、可触、能展示的作品站。</p>
-        </div>
-        <div className="log-list">
-          <article data-reveal><span>0.0.3</span><p>完成 Laper 视觉调研，新增英雄札记输入器、漂浮产品页、证据型卡片与更细的产品页展示层次。</p></article>
-          <article data-reveal><span>0.0.2</span><p>重做首页叙事、产品卡片、滚动显现、详情页媒体舞台和产品视觉占位。</p></article>
-          <article data-reveal><span>0.0.1</span><p>建立“夜航船之书”站点、四个产品位和两个 macOS 工具下载入口。</p></article>
-        </div>
+        <p>
+          页面内容已经集中到 <code>content/site-content.md</code>。以后新增工具时，
+          先在里面补产品名、一句话定位、三条能力、三条场景、下载/源码、真实素材和隐私边界，
+          再进入页面实现。
+        </p>
       </section>
 
       <Footer />
@@ -287,98 +137,49 @@ function Home({ onOpenProduct }) {
   );
 }
 
-function HeroComposer({ onOpenProduct }) {
-  const featured = products.slice(0, 4);
-
-  return (
-    <section className="hero-composer" aria-label="夜航札记工具检索" data-reveal>
-      <div className="composer-input">
-        <span>夜航札记</span>
-        <p>我想找一个能帮我「看见工作节奏」的 AI 工具</p>
-        <i aria-hidden="true" />
-      </div>
-      <div className="composer-tools">
-        {featured.map((product) => (
-          <button key={product.slug} onClick={() => onOpenProduct(product.slug)}>
-            <span>{product.index}</span>
-            {product.shortName}
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function ProductCard({ product, onOpen }) {
   const isAvailable = product.status === "available";
 
-  function handleKeyDown(event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onOpen();
-    }
-  }
-
-  function handlePointerMove(event) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width;
-    const y = (event.clientY - rect.top) / rect.height;
-    event.currentTarget.style.setProperty("--pointer-x", `${x * 100}%`);
-    event.currentTarget.style.setProperty("--pointer-y", `${y * 100}%`);
-    event.currentTarget.style.setProperty("--tilt-x", `${(0.5 - y) * 7}deg`);
-    event.currentTarget.style.setProperty("--tilt-y", `${(x - 0.5) * 7}deg`);
-    event.currentTarget.style.setProperty("--lift", "-8px");
-  }
-
-  function resetPointer(event) {
-    event.currentTarget.style.removeProperty("--tilt-x");
-    event.currentTarget.style.removeProperty("--tilt-y");
-    event.currentTarget.style.removeProperty("--lift");
-  }
-
   return (
-    <article
-      className={`product-card ${isAvailable ? "is-available" : "is-planned"}`}
-      role="button"
-      tabIndex="0"
-      onClick={onOpen}
-      onKeyDown={handleKeyDown}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={resetPointer}
-      data-reveal
-    >
-      <div className="card-visual">
-        <img src={productImages[product.slug]} alt="" />
-      </div>
-      <div className="card-body">
-        <div className="card-meta">
-          <span>{product.index}</span>
-          <span>{product.statusLabel}</span>
-          <span>{product.openSourceLabel}</span>
-        </div>
-        <h3>{product.name}</h3>
-        <p>{product.summary}</p>
-        <div className="card-evidence" aria-label={`${product.name} 状态证据`}>
-          {product.evidence.map((item) => <span key={item}>{item}</span>)}
-        </div>
-      </div>
-      <div className="card-foot">
-        <span>{product.platform}</span>
-        <span>{isAvailable ? "进入发布页" : "查看预告"}</span>
+    <article className={`product-card ${isAvailable ? "is-available" : "is-planned"}`}>
+      <button className="card-open" onClick={onOpen}>
+        <span className="card-image">
+          <img src={productImages[product.slug]} alt="" />
+        </span>
+        <span className="card-body">
+          <span className="card-meta">
+            <em>{product.index}</em>
+            <em>{product.statusLabel}</em>
+            <em>{product.openSourceLabel}</em>
+          </span>
+          <strong>{product.name}</strong>
+          <small>{product.category} · {product.platform}</small>
+          <span>{product.summary}</span>
+        </span>
+      </button>
+      <ul className="card-points">
+        {product.highlights.slice(0, 3).map((item) => <li key={item}>{item}</li>)}
+      </ul>
+      <div className="card-actions">
+        {product.downloadHref ? <a className="primary-action compact" href={product.downloadHref}>下载</a> : <span className="disabled-action compact">未发布</span>}
+        {product.sourceHref ? <a className="ghost-action compact" href={product.sourceHref} target="_blank" rel="noreferrer">源码</a> : null}
+        <button className="ghost-action compact" onClick={onOpen}>详情</button>
       </div>
     </article>
   );
 }
 
 function ProductDetail({ product, onHome }) {
-  const isAvailable = product.status === "available";
   const visual = productImages[product.slug];
 
   return (
     <section className="detail-page">
-      <button className="back-button" onClick={() => onHome("catalog")}>返回船舱目录</button>
+      <button className="back-button" onClick={() => onHome("catalog")}>返回工具目录</button>
 
-      <article className="detail-hero" data-reveal>
+      <article className="detail-hero">
+        <div className="detail-media-stage">
+          <img src={visual} alt={`${product.name} 产品视觉占位`} />
+        </div>
         <div className="detail-copy">
           <div className="detail-kicker">
             <span>{product.index}</span>
@@ -386,70 +187,38 @@ function ProductDetail({ product, onHome }) {
             <span>{product.openSourceLabel}</span>
           </div>
           <h1>{product.name}</h1>
-          <div className="detail-prompt">
-            <span>Prompt</span>
-            <p>{product.prompt}</p>
-          </div>
-          <p className="detail-manifesto">{product.manifesto}</p>
-          <p className="detail-summary">{product.detail}</p>
+          <p className="detail-summary">{product.summary}</p>
+          <p className="detail-body">{product.detail}</p>
           <div className="detail-actions">
-            {product.downloadHref ? <a className="primary-action" href={product.downloadHref}>下载 DMG</a> : <span className="disabled-action">等待首航</span>}
+            {product.downloadHref ? <a className="primary-action" href={product.downloadHref}>下载 DMG</a> : <span className="disabled-action">等待发布</span>}
             {product.sourceHref ? <a className="ghost-action" href={product.sourceHref} target="_blank" rel="noreferrer">查看源码</a> : null}
-            <a className="ghost-action" href="#media">查看素材位</a>
-          </div>
-        </div>
-        <div className="detail-media-stage">
-          <img src={visual} alt={`${product.name} 产品视觉占位`} />
-          <div className="stage-caption">
-            <span>{product.shortName}</span>
-            <span>{isAvailable ? "Release Visual" : "Concept Visual"}</span>
-          </div>
-          <div className="stage-panel" aria-hidden="true">
-            {product.evidence.map((item) => <span key={item}>{item}</span>)}
           </div>
         </div>
       </article>
 
       <div className="detail-grid">
-        <section className="detail-block" data-reveal>
-          <p className="micro-label">WHAT IT DOES</p>
-          <h2>它要解决的问题</h2>
-          <ul className="feature-list">
-            {product.features.map((feature) => <li key={feature}>{feature}</li>)}
-          </ul>
-        </section>
-        <section className="detail-block" data-reveal>
-          <p className="micro-label">WHEN TO USE</p>
-          <h2>它出现的场景</h2>
-          <ul className="feature-list">
-            {product.scenes.map((scene) => <li key={scene}>{scene}</li>)}
-          </ul>
-        </section>
+        <DetailList label="主要能力" items={product.highlights} />
+        <DetailList label="使用场景" items={product.useCases} />
+        <DetailList label="素材状态" items={product.materials} />
       </div>
 
-      <section className="media-section" id="media" data-reveal>
-        <div className="media-heading">
-          <p className="micro-label">MEDIA DOCK</p>
-          <h2>截图和视频会停靠在这里。</h2>
-          <p>当前先放概念视觉，后续替换为真实产品截图、视频演示和发布说明。</p>
-        </div>
-        <div className="media-grid">
-          {product.mediaSlots.map((slot, index) => (
-            <article key={slot} className="media-slot">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <h3>{slot}</h3>
-              <p>{index === 0 ? product.releaseNote : index === 1 ? product.nextStep : "等待真实素材补入后，这里会成为产品页的核心展示段落。"}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="privacy-section" data-reveal>
+      <section className="privacy-section">
         <p className="micro-label">BOUNDARY</p>
-        <h2>边界先写清楚，工具才值得被信任。</h2>
+        <h2>边界先写清楚。</h2>
         <p>{product.privacy}</p>
-        {!isAvailable ? <p className="planned-note">这个舱位仍在建造中，因此不会伪造下载或源码状态。</p> : null}
+        <p>{product.releaseNote}</p>
       </section>
+    </section>
+  );
+}
+
+function DetailList({ label, items }) {
+  return (
+    <section className="detail-block">
+      <h2>{label}</h2>
+      <ul className="feature-list">
+        {items.map((item) => <li key={item}>{item}</li>)}
+      </ul>
     </section>
   );
 }
